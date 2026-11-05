@@ -1,0 +1,21 @@
+name: build-badboy
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: microsoft/setup-msbuild@v2
+      - name: Build
+        shell: pwsh
+        run: |
+          Expand-Archive BADBOY-menu.zip -DestinationPath src
+          $root = (Resolve-Path "src\BADBOY-menu").Path
+          $env:DXSDK_DIR = "$root\thirdparty\dxsdk\"
+          $env:INCLUDE = "$root\thirdparty\dxsdk\Include;$root\thirdparty\freetype\include;$root\thirdparty\imgui;$root\thirdparty\imgui\backends;$env:INCLUDE"
+          $env:LIB = "$root\thirdparty\dxsdk\Lib\x64;$root\thirdparty\freetype\win64;$env:LIB"
+          msbuild "$root\thirdparty\imgui\examples\example_win32_directx11\example_win32_directx11.vcxproj" /p:Configuration=Release /p:Platform=x64 /m
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BADBOY-exe
+          path: src/BADBOY-menu/thirdparty/imgui/examples/example_win32_directx11/Release/*.exe
